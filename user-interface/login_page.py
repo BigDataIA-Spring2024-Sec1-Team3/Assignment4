@@ -1,0 +1,54 @@
+import streamlit as st
+import re
+
+# This is a placeholder function. You need to implement actual authentication logic here.
+
+def authenticate_user(email, password):
+    
+    # Example: A dictionary of users
+    users = {
+        # User's email as key, password as value
+        "abc@northeastern.edu": "Password@123"
+    }
+    return users.get(email) == password
+
+
+def validate_email(email):
+    # Email must end with @northeastern.edu
+    return re.match(r"^[a-zA-Z0-9._%+-]+@northeastern\.edu$", email)
+
+
+def validate_password(password):
+    # Password must have at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character
+    return re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", password)
+
+
+def show_login():
+    st.title("Login")
+
+    with st.form("login_form"):
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input(
+            "Password", type="password", key="login_password")
+        submitted = st.form_submit_button("Login")
+
+        if submitted:
+            if not validate_email(email):
+                st.error("Email must be a valid Northeastern University email.")
+            elif not validate_password(password):
+                st.error(
+                    "Password must have at least 8 characters, including 1 uppercase, 1 lowercase, 1 number, and 1 special character.")
+            # Implement this function to check credentials
+            elif authenticate_user(email, password):
+                st.session_state['logged_in'] = True
+                st.session_state['current_page'] = None
+            # Instead of rerunning, consider redirecting or showing a success message
+                st.success("Login successful!")
+                st.rerun()
+            # Redirect or change view here
+            else:
+                st.error("Incorrect email or password.")
+
+    if st.button("New user? Please sign up"):
+        st.session_state['current_page'] = 'register'
+        
