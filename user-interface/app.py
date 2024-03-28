@@ -28,7 +28,16 @@ else:
     # Main application logic
     st.sidebar.title('Navigation')
     selection = st.sidebar.radio("Go to", list(PAGES.keys()))
-    page = PAGES[selection]
-    page_function = getattr(
-        page, 'show_' + selection.lower().replace(' ', '_'))
-    page_function()
+
+    # Logout functionality
+    if st.sidebar.button('Logout'):
+        st.session_state['logged_in'] = False
+        st.session_state['current_page'] = 'login'
+        st.rerun()
+
+    # Display the selected page
+    if st.session_state['logged_in']:
+        page = PAGES[selection]
+        page_function = getattr(
+            page, 'show_' + selection.lower().replace(' ', '_'))
+        page_function()
