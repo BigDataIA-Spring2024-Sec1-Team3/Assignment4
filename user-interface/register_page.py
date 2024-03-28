@@ -1,5 +1,6 @@
 import streamlit as st
 import re
+import requests
 
 def validate_email(email):
     # Email must end with @northeastern.edu
@@ -30,6 +31,21 @@ def show_register():
                 st.error("Passwords do not match.")
             else:
                 # Here, implement your logic to register the user, such as adding them to a database
-                st.success("Registration successful!")
-                st.session_state['current_page'] = 'login'
-                st.rerun()
+                # Prepare the data to send to your API
+                data = {
+                    "email": email,
+                    "password": password
+                }
+
+                # Replace 'YOUR_API_ENDPOINT' with the actual endpoint URL
+                response = requests.post('YOUR_API_ENDPOINT', json=data)
+
+                # Check if the API call was successful
+                if response.status_code == 200:
+                    st.success("Registration successful!")
+                    st.session_state['current_page'] = 'login'
+                    st.rerun()
+                else:
+                    st.error(
+                        "An error occurred during registration. Please try again.")
+                    

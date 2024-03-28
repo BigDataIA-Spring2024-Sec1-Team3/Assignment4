@@ -4,6 +4,24 @@ import re
 # This is a placeholder function. You need to implement actual authentication logic here.
 
 def authenticate_user(email, password):
+    '''
+    try:
+        # Make a POST request to your authentication API endpoint
+        response = requests.post('YOUR_API_ENDPOINT_HERE/login', json={'email': email, 'password': password})
+        
+        # Check if the response status code is 200 (OK), indicating successful authentication
+        if response.status_code == 200:
+            # You might want to add additional checks here based on the response content
+            # For example, check if the API returns a specific message or token indicating successful authentication
+            return True
+        else:
+            # Handle unsuccessful authentication
+            return False
+    except Exception as e:
+        # Handle any exceptions, such as network errors
+        print(f"An error occurred: {e}")
+        return False
+    '''
     
     # Example: A dictionary of users
     users = {

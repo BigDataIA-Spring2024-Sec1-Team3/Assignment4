@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-
+import requests
 
 def show_query_data():
 
@@ -12,34 +12,31 @@ def show_query_data():
     df = pd.DataFrame()
 
     def fetch_data_from_snowflake(query):
+        '''
+        # Replace 'YOUR_API_ENDPOINT_HERE' with the actual endpoint of your API
+        api_endpoint = "YOUR_API_ENDPOINT_HERE/fetch_data"
 
         try:
-            '''
-            conn = snowflake.connector.connect(
-                user='YOUR_USER',
-                password='YOUR_PASSWORD',
-                account='YOUR_ACCOUNT',
-                warehouse='YOUR_WAREHOUSE',
-                database='YOUR_DATABASE',
-                schema='YOUR_SCHEMA'
-            )
+            # Make a POST request to your API, sending the SQL query as JSON
+            response = requests.post(api_endpoint, json={'query': query})
 
-            # Using pandas' read_sql to simplify fetching into DataFrame
-            df = pd.read_sql(query, conn)
-
-            conn.close()
-            return df
-            '''
-            return df
+            # Check if the response status code is 200 (OK)
+            if response.status_code == 200:
+                # Convert the JSON response to a DataFrame
+                df = pd.DataFrame(response.json())
+                return df
+            else:
+                # Handle the case where the API call wasn't successful
+                st.error("Failed to fetch data from API.")
+                return pd.DataFrame()  # Return an empty DataFrame on failure
         except Exception as e:
             st.error(f"Failed to fetch data: {e}")
-            df = pd.DataFrame()
-
-        return df
+            return pd.DataFrame()  # Return an empty DataFrame on exceptions
+        '''
 
     # User input for SQL query
     query = st.text_area("Enter your SQL query",
-                         value="SELECT * FROM YOUR_TABLE LIMIT 10", height=150)
+                         value="SELECT * FROM TABLE LIMIT 10", height=150)
     submit_query = st.button("Execute Query")
 
     if submit_query:
