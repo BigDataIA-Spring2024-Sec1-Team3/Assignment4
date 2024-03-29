@@ -1,5 +1,7 @@
 # Assignment4
 
+[![codelab](https://img.shields.io/badge/codelabs-4285F4?style=for-the-badge&logo=codelabs&logoColor=white)](https://codelabs-preview.appspot.com/?file_id=1pxHAQOrGnbCH2bQbzj-NBEtagLDbVzRR-P9cAtZ_J40#2)
+
 ## Problem Statement
 
 Many data-driven projects involve extracting data from various sources, such as CSV and XML files, and transforming it for analysis or storage. However, ensuring the quality and integrity of this data throughout the process can be challenging. Till now, we have made the ELT pipelines for extraction, schema validations and transformations. Now, the goal is to automate the entire process using AirFlow and develop API's with a user interface to give the end user the power to implement it all using single-click operations.
@@ -61,6 +63,9 @@ The successful implementation of these tasks will result in a streamlined proces
 
 ![Alt text](./architecture-diagram/flow_diagram.png)
 
+# Codelab
+link: https://codelabs-preview.appspot.com/?file_id=1pxHAQOrGnbCH2bQbzj-NBEtagLDbVzRR-P9cAtZ_J40#2
+
 ## Pre-requisites
 
 Before running this project, ensure you have the following prerequisites set up:
@@ -118,15 +123,17 @@ Before running this project, ensure you have the following prerequisites set up:
 ├─ docker-compose.yml
 ├─ requirements.txt
 ├─ screenshots
-│  └─ README.md
+│  └─ airflow-dag-run.png
+|  └─ snowflake-loaded-data.png
+|  └─ streamlit-file-upload.png
+|  └─ streamlit-query-date.png
+|  └─ sttreamlit-filter.png
 └─ user-interface
    ├─ Dockerfile
    ├─ README.md
    ├─ airflow_trigger.py
    ├─ app.py
    ├─ dockerfile
-   ├─ icons
-   │  └─ README.md
    ├─ login_page.py
    ├─ main_page.py
    ├─ query_data.py
@@ -168,6 +175,18 @@ content_stage_name =
 metadata_table_name =
 metadata_stage_name =
 pdf_data_file_format =
+
+[MONGODB]
+MONGODB_URL = 
+DATABASE_NAME = 
+COLLECTION_USER = 
+COLLECTION_USER_FILE = 
+ 
+[AIRFLOW]
+AIRFLOW_URL =
+AIRFLOW_DAG_ID = 
+AIRFLOW_USERNAME = 
+AIRFLOW_PASSWORD = 
 ```
 
 4. Once you have set up your environment variables, Use `docker-compose up - build` to run the application
