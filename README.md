@@ -251,7 +251,3 @@ These outcomes will equip learners with the skills and knowledge necessary to ar
 | Muskan Deepak Raisinghani | 33.3%          |
 | Rachana Keshav            | 33.3%          |
 | Ritesh Choudhary          | 33.3%          |
-
-```
-
-```
