@@ -1,6 +1,18 @@
 import streamlit as st
 import re
+import requests
+from pymongo import MongoClient
+import configparser
+from pydantic import BaseModel
 
+config = configparser.RawConfigParser()
+config.read('../configuration.properties')
+
+class User(BaseModel):
+    userid: int
+    username: str
+    password: str
+    email: str
 
 def validate_email(email):
     # Email must end with @northeastern.edu
@@ -11,6 +23,12 @@ def validate_password(password):
     # Password must have at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character
     return re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", password)
 
+def get_last_user_id(collection):
+    last_user = collection.find_one(sort=[("userid", -1)])
+    if last_user:
+        return last_user["userid"]
+    else:
+        return 0
                
 def show_register():
     with st.form("register_form", clear_on_submit=True):
@@ -22,7 +40,6 @@ def show_register():
         submitted = st.form_submit_button("Register")
 
         if submitted:
-
             if not validate_email(email):
                 st.error("Email must be a valid Northeastern University email.")
             elif not validate_password(password):
@@ -31,5 +48,26 @@ def show_register():
             elif password != password_confirm:
                 st.error("Passwords do not match.")
             else:
-                # Here, implement your logic to register the user
-                st.success("Registration successful!")
+                try:
+                    client = MongoClient(config['MONGODB']['MONGODB_URL'])
+                    db = client[config['MONGODB']["DATABASE_NAME"]]
+                    collection = db[config['MONGODB']["COLLECTION_USER"]]
+                    print("Connection to Mongo DB is successful")
+                    last_user_id = get_last_user_id(collection)
+                    new_user_id = last_user_id + 1
+
+                    # Call the FastAPI signup endpoint
+                    user = User(userid=new_user_id, password=password, username=email, email=email)
+                    user_data = user.dict()
+
+                    response = requests.post("http://127.0.0.1:8000/signup", json=user_data)
+                    if response.status_code == 200:
+                        # If the request was successful, display a success message
+                        st.success("Registration successful!")
+                    else:
+                        # If the request failed, display the error message from the response content
+                        error_message = response.json().get("detail", "Unknown error")
+                        st.error(f"Registration failed: {error_message}")
+                except Exception as e:
+                    print(e)
+                
