@@ -9,6 +9,9 @@ from passlib.context import CryptContext
 import datetime
 from pymongo import MongoClient
 
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = "your-secret-key"  
+ALGORITHM = "HS256"
 
 app = FastAPI()
 
@@ -20,13 +23,6 @@ try:
     db = client[config['MONGODB']["DATABASE_NAME"]]
     collection = db[config['MONGODB']["COLLECTION_USER"]]
     print("Connection to Mongo DB is successful")
-except Exception as e:
-    print(e)
-
-try:
-    ACCESS_TOKEN_EXPIRE_MINUTES= config["JWT"]["ACCESS_TOKEN_EXPIRE_MINUTES"]
-    SECRET_KEY=config["JWT"]["SECRET_KEY"]
-    ALGORITHM= config["JWT"]["ALGORITHM"]
 except Exception as e:
     print(e)
 
@@ -72,28 +68,29 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid token")
     return user
-
+    
 # Route to handle user signup
 @app.post("/signup")
 async def user_signup(user: User):
-    print("Inside Signup API")
     if not user:
         return False
     
     user_data = user.dict()
-    print("user", user)
-    print("user_data", user_data)
     existing_user = collection.find_one({"username": user_data["username"]})
     if existing_user:
-        return {"error": "User already exists", "message": f"User with username '{user_data['username']}' already exists"}, 400
-        # raise HTTPException(status_code=400, detail="User already exists") 
+        # return {"error": "User already exists", "message": f"User with username '{user_data['username']}' already exists"}, 400
+        raise HTTPException(status_code=400, detail="User already exists") 
 
     # Hash the password
     user_data["password"] = pwd_context.hash(user_data["password"]);
     result = collection.insert_one(user_data)
     
     if result.inserted_id:
-        return user_data
+        return {
+                "username": user_data["username"],
+                "email":user_data["email"],
+                "userid":user_data["userid"]
+            }
     else:
         raise HTTPException(status_code=500, detail="Failed to create user")
     
@@ -161,6 +158,15 @@ def upload_to_s3(file, s3, bucket_name, file_name):
         except NoCredentialsError:
             return False, "Credentials not found"
 
+def mapUserAndFile(user, file_name):
+    try:
+        collection = db[config['MONGODB']["COLLECTION_USER_FILE"]]
+        user_file_data = {"userid": user["userid"], "username": user["username"], "file_name": file_name}
+        collection.insert_one(user_file_data)
+        return True  
+    except Exception as e:
+        print(f"An error occurred while mapping user and file: {e}")
+        return False  
 
 # FastAPI endpoint to handle file upload
 @app.post("/upload/")
@@ -169,13 +175,15 @@ async def upload_file_to_s3(file: UploadFile = File(...), current_user: dict = D
         s3, bucket_name = aws_s3_connection()
         file_name = f"PDF_Files/{file.filename}"
         success, message = upload_to_s3(file.file, s3, bucket_name, file_name)
+        s3_file_url="s3://" + bucket_name + "/" + file_name
         if success:
-            return {"message": message}
+            if(mapUserAndFile(current_user, file.filename)):
+                return {"message": message, "file_location": s3_file_url}
         else:
             return {"error": message}
     except Exception as e:
         return {"error": str(e)}
     finally:
         file.file.close()
-    
+
 
