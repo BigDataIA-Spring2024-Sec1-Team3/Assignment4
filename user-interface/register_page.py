@@ -52,7 +52,6 @@ def show_register():
                     client = MongoClient(config['MONGODB']['MONGODB_URL'])
                     db = client[config['MONGODB']["DATABASE_NAME"]]
                     collection = db[config['MONGODB']["COLLECTION_USER"]]
-                    print("Connection to Mongo DB is successful")
                     last_user_id = get_last_user_id(collection)
                     new_user_id = last_user_id + 1
 
