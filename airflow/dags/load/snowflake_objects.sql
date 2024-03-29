@@ -1,8 +1,8 @@
 -- using role SYSADMIN to create all objects
 USE ROLE SYSADMIN;
 
--- creating warehouse BIG_DATA_PROJECT_WH
-CREATE WAREHOUSE IDENTIFIER('"BIG_DATA_PROJECT_WH"') 
+-- creating warehouse 
+CREATE WAREHOUSE IDENTIFIER('"<YOUR_WAREHOUSE_NAME>"') 
     WAREHOUSE_SIZE = 'X-Small' 
     AUTO_RESUME = true 
     AUTO_SUSPEND = 60 
@@ -12,16 +12,16 @@ CREATE WAREHOUSE IDENTIFIER('"BIG_DATA_PROJECT_WH"')
     MAX_CLUSTER_COUNT = 1 
     SCALING_POLICY = 'STANDARD';
 
-USE WAREHOUSE BIG_DATA_PROJECT_WH;
+USE WAREHOUSE <YOUR_WAREHOUSE_NAME>;
 
 -- Creating DB for PDF data
-CREATE DATABASE AUTOMATED_DATA_DB;
+CREATE DATABASE <YOUR_DATABASE_NAME>;
 
 -- Creating schema for PDF data
-CREATE SCHEMA AUTOMATED_DATA_SCHEMA;
+CREATE SCHEMA <YOUR_SCHEMA_NAME>;
 
 -- creating table for PDF content
-CREATE OR REPLACE TABLE PDF_CONTENT_TABLE (
+CREATE OR REPLACE TABLE <YOUR_PDF_CONTENT_TABLE> (
         title VARCHAR, 
         topic_name VARCHAR, 
         year INT, 
@@ -30,7 +30,7 @@ CREATE OR REPLACE TABLE PDF_CONTENT_TABLE (
     );
 
 -- creating table for PDF metadata
-CREATE OR REPLACE TABLE PDF_METADATA_TABLE (
+CREATE OR REPLACE TABLE <YOUR_PDF_METADATA_TABLE> (
         text VARCHAR, 
         para INT, 
         bboxes VARCHAR, 
@@ -42,7 +42,7 @@ CREATE OR REPLACE TABLE PDF_METADATA_TABLE (
     );
 
     -- Creating tab separated FF for CSVs
-CREATE OR REPLACE FILE FORMAT PDF_DATA_FF
+CREATE OR REPLACE FILE FORMAT <YOUR_FILE_FORMAT_NAME>
     TYPE = 'CSV'
     FIELD_DELIMITER = '\t'
     SKIP_HEADER = 1
@@ -51,13 +51,13 @@ CREATE OR REPLACE FILE FORMAT PDF_DATA_FF
     TRIM_SPACE = True;
     
 -- creating external stage for PDF Content connected with S3
-CREATE OR REPLACE STAGE PDF_CONTENT_STAGE
-  URL = 's3://bigdata-assignment4/Content_CSV/'
-  FILE_FORMAT = PDF_DATA_FF
+CREATE OR REPLACE STAGE <YOUR_CONTENT_STAGE_NAME>
+  URL = 's3://<your_bucket_name>/<your-content-csv-folder-path>/'
+  FILE_FORMAT = <YOUR_FILE_FORMAT_NAME>
   CREDENTIALS=(AWS_KEY_ID='<your-access-key>' AWS_SECRET_KEY='<your-secret-key>');
 
 -- creating external stage for PDF Metadata connected with S3
-CREATE OR REPLACE STAGE PDF_METADATA_STAGE
-  URL = 's3://bigdata-assignment4/Metadata_CSV/'
-  FILE_FORMAT = PDF_DATA_FF
+CREATE OR REPLACE STAGE <YOUR_METADATA_STAGE_NAME>
+  URL = 's3://<your_bucket_name>/<your-metadata-csv-folder-path>/'
+  FILE_FORMAT = <YOUR_FILE_FORMAT_NAME>
   CREDENTIALS=(AWS_KEY_ID='<your-access-key>' AWS_SECRET_KEY='<your-secret-key>');
