@@ -33,10 +33,6 @@ def show_login():
             if response:
                 st.session_state['logged_in'] = True
                 st.success("Login successful!")
-                st.rerun()
+                st.experimental_rerun()
             else:
-                # error_message = response.json().get("detail", "Unknown error")
-                st.error(f"Registration failed")
-                
-
-
+                st.error("Incorrect email or password.")
