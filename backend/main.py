@@ -8,6 +8,7 @@ import jwt
 from passlib.context import CryptContext
 import datetime
 from pymongo import MongoClient
+from sqlalchemy import create_engine, text
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 SECRET_KEY = "your-secret-key"  
@@ -16,21 +17,47 @@ ALGORITHM = "HS256"
 app = FastAPI()
 
 config = configparser.RawConfigParser()
-config.read('../../configuration.properties')
+config.read('./configuration.properties')
 
-try:
-    client = MongoClient(config['MONGODB']['MONGODB_URL'])
-    db = client[config['MONGODB']["DATABASE_NAME"]]
-    collection = db[config['MONGODB']["COLLECTION_USER"]]
-    print("Connection to Mongo DB is successful")
-except Exception as e:
-    print(e)
+client = MongoClient(config['MONGODB']['MONGODB_URL'])
+db = client[config['MONGODB']["DATABASE_NAME"]]
+collection = db[config['MONGODB']["COLLECTION_USER"]]
 
 # Password hashing settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 password bearer token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+AIRFLOW_URL = config['AIRFLOW']['AIRFLOW_URL']
+AIRFLOW_DAG_ID = config['AIRFLOW']['AIRFLOW_DAG_ID']
+AIRFLOW_USERNAME = config['AIRFLOW']['AIRFLOW_USERNAME']
+AIRFLOW_PASSWORD = config['AIRFLOW']['AIRFLOW_PASSWORD']
+
+user = config['SNOWFLAKE']['User']
+password = config['SNOWFLAKE']['Password']
+account = config['SNOWFLAKE']['Account']
+warehouse = config['SNOWFLAKE']['Warehouse']
+database = config['SNOWFLAKE']['Database']
+schema = config['SNOWFLAKE']['Schema']
+
+# Create a connection string
+connection_string = f'snowflake://{user}:{password}@{account}/' \
+                        f'?warehouse={warehouse}&database={database}&schema={schema}'
+
+access_key = config['AWS']['access_key']
+secret_key = config['AWS']['secret_key']
+bucket_name = config['s3-bucket']['bucket']
+
+# Establish s3 connection
+def aws_s3_connection():
+    try:
+        s3_client = boto3.client('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        return s3_client, bucket_name
+    except Exception as e:
+        print("Exception in aws_s3_connection func: ",e)
+        print('S3 Connection Failed')
+
 
 # User model
 class User(BaseModel):
@@ -111,20 +138,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     else:
         return{"message": "Failed"}
 
-# Establish s3 connection
-def aws_s3_connection():
-    try:
-        # check = getProp()
-        access_key = config['AWS']['access_key']
-        secret_key = config['AWS']['secret_key']
-        bucket_name = config['s3-bucket']['bucket']
-        s3_client = boto3.client('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
-        return s3_client, bucket_name
-    except Exception as e:
-        print("Exception in aws_s3_connection func: ",e)
-        print('S3 Connection Failed')
-
-
 # # Function to check if file exists in S3 bucket
 def check_file_exists(s3, bucket_name, file_name):
     try:
@@ -187,3 +200,41 @@ async def upload_file_to_s3(file: UploadFile = File(...), current_user: dict = D
         file.file.close()
 
 
+# Function to trigger the Airflow pipeline 
+@app.post("/trigger-airflow-pipeline/")
+async def trigger_airflow_pipeline(file_location: str, current_user: User = Depends(get_current_user)):
+    try:
+        response = requests.post(
+            f"{AIRFLOW_URL}{AIRFLOW_DAG_ID}/dagRuns",
+            auth=(AIRFLOW_USERNAME, AIRFLOW_PASSWORD),
+            json={"conf": {"file_location": file_location}},
+            headers={"Content-Type": "application/json"},
+        )
+        if response.status_code == 200:
+            return {"message": "Pipeline triggered successfully."}
+        else:
+            raise HTTPException(
+                status_code=400, detail="Failed to trigger pipeline")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+# Define API endpoint to execute SQL queries
+@app.post("/execute/")
+def execute_query(query: str, current_user: User = Depends(get_current_user)):
+    try:
+        # Create an engine for Snowflake Connection
+        engine = create_engine(connection_string)
+        print("Engine created for snowflake sqlalchemy")
+
+        with engine.connect() as conn:
+            # Execute the SQL query
+            result = conn.execute(query)
+
+            # Fetch all rows from the result
+            rows = result.fetchall()
+            return {"result": rows}
+        
+    except Exception as e:
+        # Return error message if query execution fails
+        raise HTTPException(status_code=500, detail=str(e))
