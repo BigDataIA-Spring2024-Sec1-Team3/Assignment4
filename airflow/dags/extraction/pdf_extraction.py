@@ -5,10 +5,9 @@ import pandas as pd
 from io import BytesIO, StringIO
 import re
 from difflib import SequenceMatcher
-import configparser
 
 config = configparser.RawConfigParser()
-config.read('../../../configuration.properties')
+config.read('dags/configuration.properties')
 
 def aws_s3_connection():
     access_key = config['AWS']['access_key']
@@ -19,11 +18,6 @@ def aws_s3_connection():
 
 
 def find_bucket_key(s3_path):
-    """
-    This is a helper function that given an s3 path such that the path is of
-    the form: bucket/key
-    It will return the bucket and the key represented by the s3 path
-    """
     s3_components = s3_path.split('/')
     bucket = s3_components[0]
     s3_key = ""
@@ -32,10 +26,6 @@ def find_bucket_key(s3_path):
     return bucket, s3_key
 
 def split_s3_bucket_key(s3_path):
-    """Split s3 path into bucket and key prefix.
-    This will also handle the s3:// prefix.
-    :return: Tuple of ('bucketname', 'keyname')
-    """
     if s3_path.startswith('s3://'):
         s3_path = s3_path[5:]
     return find_bucket_key(s3_path)
@@ -77,9 +67,6 @@ def get_pdf_from_s3(s3_client, bucket, key_s3):
     return pdfFileObj
 
 def process_pdf_content(s3_uri):
-  """ function to read and extract data from pdf file.
-  input is a s3 uri
-  """
   print("---------------Starting Extraction---------------")
   
   # s3 client
@@ -180,7 +167,7 @@ def process_pdf_content(s3_uri):
     for sub_topic, learning in sub_topics.items():
       if sub_topic == "":
         continue
-      data_dict = {'curriculum_year': year, 'cfa_level': level, 'curriculum_topic': curr_topic, 'curriculum_refresher_reading': sub_topic, 'learning_outcomes': learning}
+      data_dict = {'year': year, 'level': level, 'title': curr_topic, 'topic_name': sub_topic, 'learning_outcome': learning}
       raw_data_list.append(data_dict)
 
   df_raw = pd.DataFrame(raw_data_list)
@@ -188,13 +175,19 @@ def process_pdf_content(s3_uri):
   csv_buffer = StringIO()
   df_raw.to_csv(csv_buffer, sep="\t", index=False)
   
-  s3_key = "CSV_Data/" + str(key_s3.split("/")[1].split(".")[0]) + ".csv"
+  print(df_raw.head())
+  
+  s3_key = "Raw_CSV/PDF_Content/" + str(key_s3.split("/")[1].split(".")[0]) + ".csv"
   
   csv_buffer_encode = BytesIO(csv_buffer.getvalue().encode())
+  
+  print(csv_buffer.getvalue())
 
+  print(csv_buffer_encode)
+  
   s3_client.upload_fileobj(csv_buffer_encode, bucket, s3_key)
   
-  s3_uri_csv = "s3://" + bucket + s3_key
+  s3_uri_csv = "s3://" + bucket + "/" +s3_key
   
   print("Successfully loaded csv to S3")
   
@@ -202,4 +195,4 @@ def process_pdf_content(s3_uri):
 
   return s3_uri_csv
 
-process_pdf_content(s3_uri)
+# process_pdf_content(s3_uri)
