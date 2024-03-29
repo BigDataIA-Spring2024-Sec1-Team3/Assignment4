@@ -134,8 +134,6 @@ Before running this project, ensure you have the following prerequisites set up:
    ├─ airflow_trigger.py
    ├─ app.py
    ├─ dockerfile
-   ├─ icons
-   │  └─ README.md
    ├─ login_page.py
    ├─ main_page.py
    ├─ query_data.py
