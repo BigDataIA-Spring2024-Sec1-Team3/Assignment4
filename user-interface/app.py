@@ -1,11 +1,13 @@
 import streamlit as st
+import re
 import upload_page
 import query_data
-import login_page
-import register_page
 import airflow_trigger
 import main_page
+import login_page
+import register_page
 
+# Main app logic starts here
 PAGES = {
     "Main Page": main_page,
     "Upload Files": upload_page,
@@ -13,37 +15,27 @@ PAGES = {
     "Query Data": query_data
 }
 
-# Initialize session state variables
-if 'show_registration_page' not in st.session_state:
-    st.session_state['show_registration_page'] = False
-if 'registration_submitted' not in st.session_state:
-    st.session_state['registration_submitted'] = False
-if 'current_page' not in st.session_state:
-    st.session_state['current_page'] = 'login'
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-# Show login or registration page if not logged in
-if not st.session_state.get('logged_in', False):
-    if st.session_state.get('current_page', 'login') == 'login' and not st.session_state['show_registration_page']:
-        login_page.show_login()
-    elif st.session_state['show_registration_page'] and not st.session_state['registration_submitted']:
+if not st.session_state['logged_in']:
+    st.title("Login/Register")
+    tab1, tab2 = st.tabs(["Register", "Login"])
+
+    with tab1:
         register_page.show_register()
-        st.session_state['show_registration_page'] = False  # Prevent loop
 
-
+    with tab2:
+        login_page.show_login()
+        
 else:
-    # Main application logic
     st.sidebar.title('Navigation')
     selection = st.sidebar.radio("Go to", list(PAGES.keys()))
 
-    # Logout functionality
     if st.sidebar.button('Logout'):
         st.session_state['logged_in'] = False
-        st.session_state['current_page'] = 'login'
         st.rerun()
 
-    # Display the selected page
     if st.session_state['logged_in']:
         page = PAGES[selection]
         page_function = getattr(
