@@ -38,8 +38,6 @@ def show_login():
             elif authenticate_user(email, password):
                 st.session_state['logged_in'] = True
                 st.success("Login successful!")
-                st.rerun()
+                st.experimental_rerun()
             else:
                 st.error("Incorrect email or password.")
-
-

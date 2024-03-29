@@ -27,14 +27,14 @@ if not st.session_state['logged_in']:
 
     with tab2:
         login_page.show_login()
-        
+
 else:
     st.sidebar.title('Navigation')
     selection = st.sidebar.radio("Go to", list(PAGES.keys()))
 
     if st.sidebar.button('Logout'):
         st.session_state['logged_in'] = False
-        st.rerun()
+        st.experimental_rerun()
 
     if st.session_state['logged_in']:
         page = PAGES[selection]
