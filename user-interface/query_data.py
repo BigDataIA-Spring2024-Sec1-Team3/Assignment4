@@ -10,7 +10,7 @@ def fetch_data_from_snowflake(query):
                 "Authorization": f"Bearer {access_token}"
             }
 
-            response = requests.post("http://127.0.0.1:8000/execute/?query=" + query, headers=headers)
+            response = requests.post("http://backend:8000/execute/?query=" + query, headers=headers)
             if response.status_code == 200:
                 # Convert the JSON response to a DataFrame
                 result = response.json()

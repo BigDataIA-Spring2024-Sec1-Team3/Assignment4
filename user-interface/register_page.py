@@ -59,7 +59,7 @@ def show_register():
                     user = User(userid=new_user_id, password=password, username=email, email=email)
                     user_data = user.dict()
 
-                    response = requests.post("http://127.0.0.1:8000/signup", json=user_data)
+                    response = requests.post("http://backend:8000/signup", json=user_data)
                     if response.status_code == 200:
                         # If the request was successful, display a success message
                         st.success("Registration successful!")

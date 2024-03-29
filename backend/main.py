@@ -7,8 +7,10 @@ import configparser
 import jwt
 from passlib.context import CryptContext
 import datetime
+import random
 from pymongo import MongoClient
 from sqlalchemy import create_engine, text
+import requests
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 SECRET_KEY = "your-secret-key"  
@@ -204,10 +206,13 @@ async def upload_file_to_s3(file: UploadFile = File(...), current_user: dict = D
 @app.post("/trigger-airflow-pipeline/")
 async def trigger_airflow_pipeline(file_location: str, current_user: User = Depends(get_current_user)):
     try:
+        rand1 = random.randint(1,1000)
+        rand2 = random.randint(1,1000)
+        dag_run_id = str("id_run_" +str(rand1)+str(rand2))
         response = requests.post(
-            f"{AIRFLOW_URL}{AIRFLOW_DAG_ID}/dagRuns",
+            f"{AIRFLOW_URL}/api/v1/dags/{AIRFLOW_DAG_ID}/dagRuns",
             auth=(AIRFLOW_USERNAME, AIRFLOW_PASSWORD),
-            json={"conf": {"file_location": file_location}},
+            json={"conf": {"s3_uri": file_location}, "dag_run_id": dag_run_id },
             headers={"Content-Type": "application/json"},
         )
         if response.status_code == 200:
