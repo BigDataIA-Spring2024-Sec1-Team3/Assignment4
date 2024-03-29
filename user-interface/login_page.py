@@ -1,75 +1,42 @@
+from calendar import c
 import streamlit as st
 import re
-import register_page
-
-# This is a placeholder function. You need to implement actual authentication logic here.
+import requests
 
 def authenticate_user(email, password):
-    '''
     try:
-        # Make a POST request to your authentication API endpoint
-        response = requests.post('YOUR_API_ENDPOINT_HERE/login', json={'email': email, 'password': password})
-
-        # Check if the response status code is 200 (OK), indicating successful authentication
+        # Make a POST request to the FastAPI /token endpoint
+        response = requests.post("http://127.0.0.1:8000/token", data={"username": email, "password": password})
+        
+        # Check if the request was successful
         if response.status_code == 200:
-            # You might want to add additional checks here based on the response content
-            # For example, check if the API returns a specific message or token indicating successful authentication
+            access_token = response.json().get("access_token")
+            if "access_token" not in st.session_state:
+                st.session_state['access_token'] = access_token
             return True
         else:
-            # Handle unsuccessful authentication
             return False
-    except Exception as e:
-        # Handle any exceptions, such as network errors
-        print(f"An error occurred: {e}")
+    except requests.RequestException as e:
+        st.error(f"Error occurred during authentication: {e}")
         return False
-    '''
-
-    # Example: A dictionary of users
-    users = {
-        # User's email as key, password as value
-        "abc@northeastern.edu": "Password@123"
-    }
-    return users.get(email) == password
-
-
-def validate_email(email):
-    # Email must end with @northeastern.edu
-    return re.match(r"^[a-zA-Z0-9._%+-]+@northeastern\.edu$", email)
-
-
-def validate_password(password):
-    # Password must have at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character
-    return re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", password)
 
 
 def show_login():
-    st.title("Login")
-
-    with st.form("login_form"):
+    with st.form("login_form", clear_on_submit=True):
         email = st.text_input("Email", key="login_email")
         password = st.text_input(
             "Password", type="password", key="login_password")
         submitted = st.form_submit_button("Login")
 
         if submitted:
-            if not validate_email(email):
-                st.error("Email must be a valid Northeastern University email.")
-            elif not validate_password(password):
-                st.error(
-                    "Password must have at least 8 characters, including 1 uppercase, 1 lowercase, 1 number, and 1 special character.")
-            # Implement this function to check credentials
-            elif authenticate_user(email, password):
+            response = authenticate_user(email, password)
+            if response:
                 st.session_state['logged_in'] = True
-                st.session_state['current_page'] = None
-            # Instead of rerunning, consider redirecting or showing a success message
                 st.success("Login successful!")
                 st.rerun()
-            # Redirect or change view here
             else:
-                st.error("Incorrect email or password.")
+                # error_message = response.json().get("detail", "Unknown error")
+                st.error(f"Registration failed")
+                
 
-    if st.button("New user? Please sign up"):
-        st.session_state['show_registration_page'] = True
-        st.session_state['registration_submitted'] = False
-        st.rerun()
 
