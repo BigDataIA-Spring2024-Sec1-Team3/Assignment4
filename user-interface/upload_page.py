@@ -13,10 +13,14 @@ def upload_file_to_s3(file):
             "Authorization": f"Bearer {access_token}"
         }
         # Make the POST request to upload the file
-        response = requests.post("http://127.0.0.1:8000/upload", files=files, headers=headers)
-
+        response = requests.post("http://backend:8000/upload", files=files, headers=headers)
+        
         # Check if the request was successful
         if response.status_code == 200:
+            result=response.json()
+            s3_file_location = result["file_location"]
+            if "s3_file_location" not in st.session_state:
+                st.session_state['s3_file_location'] = s3_file_location
             st.success("File uploaded successfully")
         else:
             error_message = response.json().get("detail", "Unknown error")

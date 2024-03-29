@@ -6,8 +6,8 @@ import requests
 def authenticate_user(email, password):
     try:
         # Make a POST request to the FastAPI /token endpoint
-        response = requests.post("http://127.0.0.1:8000/token", data={"username": email, "password": password})
-        
+        response = requests.post("http://backend:8000/token", data={"username": email, "password": password})
+
         # Check if the request was successful
         if response.status_code == 200:
             access_token = response.json().get("access_token")
